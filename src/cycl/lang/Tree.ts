@@ -14,6 +14,34 @@ import { Program } from "./Program";
 import { ClickCommand } from './ast/ClickCommand';
 import { IntrospectURL } from './ast/IntrospectURL';
 import { TypeIntoCommand } from './ast/TypeIntoCommand';
+import { AST } from './ast/AST';
+
+class Dictionary extends AST {
+    get children(): AST[] {
+        return this.entries;
+    }
+    toJS(): string {
+        return `{${this.entries.map(entry => entry.toJS()).join(",")}}`
+    }
+    inspect(): string {
+        return "dict:" + this.entries.map(entry => entry.inspect()).join(",");
+    }
+    constructor(public entries: AST[]) { super() }
+}
+
+class Tuple extends AST {
+    constructor(public key: string, public value: AST) { super(); }
+    inspect() { return this.key + ":" + this.value.inspect(); }
+    get children() { return [this.value]; }
+    toJS() { return [this.key, this.value.toJS()].join(":"); }
+}
+
+class BooleanLit extends AST {
+    constructor(public value: boolean) { super(); }
+    get children() { return [] }
+    inspect() { return String(this.value) }
+    toJS() { return this.value ? "true" : "false" }
+}
 
 const Tree = {
     Program: (statements: Node, _delim: Node) => {
@@ -25,8 +53,9 @@ const Tree = {
 
     VisitPage: (_visit: Node, _lparen: Node, route: Node, _rparen: Node) =>
         new VisitPageCommand(route.tree),
-    
-    ClickElement: (_click: Node, _parens: Node) => new ClickCommand(),
+
+    ClickElement: (_click: Node, _lp: Node, dict: Node, _rp: Node) => new ClickCommand(dict.tree),
+
 
     TypeInto: (_type: Node, _lparens: Node, text: Node, _rparens: Node) =>
         new TypeIntoCommand(text.tree),
@@ -52,7 +81,7 @@ const Tree = {
         new Chain([left.tree, right.tree]),
 
     Expectation: (_should: Node, expected: Node) => expected.tree,
-    
+
     Expected: (_lp: Node, cond: Node, _comma: Node, val: Node, _rp: Node) => {
         return new Expectation(cond.tree, val.tree)
     },
@@ -64,7 +93,15 @@ const Tree = {
     StringLiteral_single: (_lq: Node, contents: Node, _rq: Node) => new StringLiteral(contents.sourceString),
     StringLiteral_double: (_lq: Node, contents: Node, _rq: Node) => new StringLiteral(contents.sourceString),
     NumberLiteral: (digits: Node) => new NumberLiteral(Number(digits.sourceString)),
-    
+
+    BooleanLiteral_truth: (_true: Node) => new BooleanLit(true),
+    BooleanLiteral_falsity: (_false: Node) => new BooleanLit(false),
+
+    Dictionary: (_rb: Node, entries: Node, _lp: Node) =>
+        new Dictionary(entries.tree),
+
+    Tuple: (key: Node, _colon: Node, value: Node) =>
+        new Tuple(key.sourceString, value.tree),
 
     NonemptyListOf: (eFirst: Node, _sep: any, eRest: Node) => {
         let result = [eFirst.tree, ...eRest.tree];

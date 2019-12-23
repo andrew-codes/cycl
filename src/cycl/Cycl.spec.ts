@@ -53,6 +53,12 @@ describe(Cycl, () => {
             )
         })
 
+        fit('dictionary', () => {
+            expect(cycl.interpret("get(.item).click({force:true})")).toEqual(
+                `cy.get('.item').click({force:true})`
+            )
+
+        })
         test.todo("finds")
     })
 

@@ -7,14 +7,14 @@ Cycl {
 
     Command
       = BrowserOp
-    
+
     BrowserOp
       = BrowserOp "." ChainableBrowserOp -- chain
       | VisitPage
       | IntrospectURL
       | GetElement
       | ContainsText
-    
+
     ChainableBrowserOp
       =
       | ClickElement
@@ -37,22 +37,27 @@ Cycl {
     GetElement = Get "(" Selector ")"
     Get = "get"
 
-    
+
     ClickElement
-      = Click "()"?
+      = Click "(" Dictionary ")"
+      //| Click
 
     Click = "click"
+
+    Dictionary = "{" ListOf<Tuple, ","> "}"
+
+    Tuple = ident ":" Value
 
 
     TypeInto
       = Type "(" StringLiteral ")"
-    
+
     Type = "type"
 
     Expectation
       = Should Expected
-    
-    Expected 
+
+    Expected
       = "(" Condition "," Value ")"
       // | "(" Condition ")" -- unary
 
@@ -66,10 +71,15 @@ Cycl {
     Value
       = NumberLiteral
       | StringLiteral
-     
+      | BooleanLiteral
+
+    BooleanLiteral
+      = "true" -- truth
+      | "false" -- falsity
+
     NumberLiteral
       = number
-    
+
     // FindElement = Find "(" Selector ")"
     // Find = "find"
 
@@ -90,7 +100,7 @@ Cycl {
     number = digit+
 
     comment
-      = #"//" #(~lineTerminator any)* lineTerminator? 
+      = #"//" #(~lineTerminator any)* lineTerminator?
     space += comment
     delim = ";" | lineTerminator
     lineTerminator = "\r" | "\n"

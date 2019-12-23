@@ -5,9 +5,11 @@ visit("localhost:3000")
 get(#list > li).should("have.length", 2)
 get(#item)
 
+// customCmd("/my", { ... })
+
 // has CYCL on the page
 // it "has text 'cycl'"
-contains("CYCL")
+contains("CYCL").click
 
 // interact with an element
 //it "interacts with an element"
